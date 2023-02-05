@@ -267,10 +267,23 @@ exports.handler = async (event, context) => {
     await execa(this.packager, args)
   }
 
+  async goFindSourceFiles(task: ListrTaskWrapper<any, any>) {
+    var sources = [];
+    fs.readdirSync('.').forEach(file => {
+      if (file.endsWith('.go')) {
+        sources.push(file);
+      }
+    });
+    return sources
+  }
+
   async goCompile(task: ListrTaskWrapper<any, any>) {
     task.title = 'Compiling go binary'
     await this.deployment.update('GO_COMPILE')
-    await execa('go', ['build', '-o', 'main', 'main.go'], { env: { GOOS: 'linux', GOARCH: 'amd64' } })
+    var sources = await goFindSourceFiles(task) 
+    var build = ['build', '-o', 'main']
+    var fullBuild = build.concat(sources)
+    await execa('go', fullBuild, { env: { GOOS: 'linux', GOARCH: 'amd64' } })
   }
 
   async goArchive(task: ListrTaskWrapper<any, any>) {
